@@ -1,12 +1,15 @@
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class Account {
 
     private String accountNumber;
     private String customerName;
     private double balance;
-    private List<Transaction> transactions = new ArrayList<>();
+
+    private TreeMap<LocalDateTime, Transaction> transactions =
+            new TreeMap<>();
 
     public Account(String accountNumber, String customerName, double balance) {
         this.accountNumber = accountNumber;
@@ -26,13 +29,16 @@ public class Account {
         return balance;
     }
 
-    public List<Transaction> getTransactions() {
+    public TreeMap<LocalDateTime, Transaction> getTransactions() {
         return transactions;
     }
 
     public void deposit(double amount) {
+
         if (amount <= 0) {
-            throw new IllegalArgumentException("Amount must be positive.");
+            throw new IllegalArgumentException(
+                    "Amount must be positive."
+            );
         }
 
         balance += amount;
@@ -42,37 +48,53 @@ public class Account {
             throws InsufficientFundsException {
 
         if (amount <= 0) {
-            throw new IllegalArgumentException("Amount must be positive.");
+            throw new IllegalArgumentException(
+                    "Amount must be positive."
+            );
         }
 
         if (amount > balance) {
-            throw new InsufficientFundsException("Insufficient funds.");
+            throw new InsufficientFundsException(
+                    "Insufficient funds."
+            );
         }
 
         balance -= amount;
     }
 
     public void addTransaction(Transaction transaction) {
-        transactions.add(transaction);
+
+        LocalDateTime time = transaction.getTimestamp();
+
+        while (transactions.containsKey(time)) {
+            time = time.plusNanos(1);
+        }
+
+        transactions.put(time, transaction);
     }
 
     public Transaction getLastTransaction() {
+
         if (transactions.isEmpty()) {
             return null;
         }
 
-        return transactions.get(transactions.size() - 1);
+        return transactions.lastEntry().getValue();
     }
 
     public void removeLastTransaction() {
+
         if (!transactions.isEmpty()) {
-            transactions.remove(transactions.size() - 1);
+            transactions.pollLastEntry();
         }
     }
 
     public void removeTransaction(String id) {
-        transactions.removeIf(
-            t -> t.getTransactionId().equals(id)
+
+        transactions.entrySet().removeIf(
+                entry -> entry.getValue()
+                        .getTransactionId()
+                        .equals(id)
         );
     }
 
@@ -81,6 +103,7 @@ public class Account {
     }
 
     public String toString() {
+
         return "Account ID : " + accountNumber +
                 "\nCustomer : " + customerName +
                 "\nBalance : Rs." + balance;

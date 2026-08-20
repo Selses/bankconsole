@@ -1,12 +1,15 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.UUID;
 
 public class BankService {
 
     private HashMap<String, Account> accounts = new HashMap<>();
-    private HashMap<String, List<String>> customerIndex = new HashMap<>();
+
+    private HashMap<String, List<String>> customerIndex =
+            new HashMap<>();
 
     private int nextId = 1001;
 
@@ -19,7 +22,10 @@ public class BankService {
         accounts.put(id, account);
 
         customerIndex
-                .computeIfAbsent(name.toLowerCase(), k -> new ArrayList<>())
+                .computeIfAbsent(
+                        name.toLowerCase(),
+                        k -> new ArrayList<>()
+                )
                 .add(id);
 
         return id;
@@ -74,7 +80,9 @@ public class BankService {
         Account to = getAccount(toId);
 
         if (fromId.equals(toId)) {
-            System.out.println("Cannot transfer to same account.");
+            System.out.println(
+                    "Cannot transfer to same account."
+            );
             return;
         }
 
@@ -84,39 +92,46 @@ public class BankService {
         }
 
         if (from.getBalance() < amount) {
-            throw new InsufficientFundsException("Insufficient funds.");
+            throw new InsufficientFundsException(
+                    "Insufficient funds."
+            );
         }
 
         double oldFromBalance = from.getBalance();
         double oldToBalance = to.getBalance();
 
-        String transactionId = UUID.randomUUID().toString();
+        String transactionId =
+                UUID.randomUUID().toString();
 
         try {
 
             from.withdraw(amount);
             to.deposit(amount);
 
-            Transaction outTransaction = new Transaction(
-                    transactionId,
-                    "TRANSFER_OUT",
-                    amount,
-                    fromId,
-                    toId
-            );
+            Transaction outTransaction =
+                    new Transaction(
+                            transactionId,
+                            "TRANSFER_OUT",
+                            amount,
+                            fromId,
+                            toId
+                    );
 
-            Transaction inTransaction = new Transaction(
-                    transactionId,
-                    "TRANSFER_IN",
-                    amount,
-                    fromId,
-                    toId
-            );
+            Transaction inTransaction =
+                    new Transaction(
+                            transactionId,
+                            "TRANSFER_IN",
+                            amount,
+                            fromId,
+                            toId
+                    );
 
             from.addTransaction(outTransaction);
             to.addTransaction(inTransaction);
 
-            System.out.println("Transfer Successful.");
+            System.out.println(
+                    "Transfer Successful."
+            );
 
         } catch (RuntimeException e) {
 
@@ -133,10 +148,13 @@ public class BankService {
 
         Account account = getAccount(id);
 
-        Transaction transaction = account.getLastTransaction();
+        Transaction transaction =
+                account.getLastTransaction();
 
         if (transaction == null) {
-            System.out.println("No transaction to reverse.");
+            System.out.println(
+                    "No transaction to reverse."
+            );
             return;
         }
 
@@ -153,7 +171,8 @@ public class BankService {
 
         } else if (type.equals("TRANSFER_OUT")) {
 
-            Account target = getAccount(transaction.getToId());
+            Account target =
+                    getAccount(transaction.getToId());
 
             account.deposit(amount);
             target.withdraw(amount);
@@ -164,7 +183,8 @@ public class BankService {
 
         } else if (type.equals("TRANSFER_IN")) {
 
-            Account source = getAccount(transaction.getFromId());
+            Account source =
+                    getAccount(transaction.getFromId());
 
             account.withdraw(amount);
             source.deposit(amount);
@@ -176,24 +196,33 @@ public class BankService {
 
         account.removeLastTransaction();
 
-        System.out.println("Transaction Reversed Successfully.");
+        System.out.println(
+                "Transaction Reversed Successfully."
+        );
     }
 
     public void showCustomerAccounts(String name) {
 
-        List<String> ids = customerIndex.get(
-                name.toLowerCase()
-        );
+        List<String> ids =
+                customerIndex.get(
+                        name.toLowerCase()
+                );
 
         if (ids == null || ids.isEmpty()) {
-            System.out.println("No accounts found.");
+            System.out.println(
+                    "No accounts found."
+            );
             return;
         }
 
-        System.out.println("Accounts for " + name + ":");
+        System.out.println(
+                "Accounts for " + name + ":"
+        );
 
         for (String id : ids) {
-            System.out.println("Account ID : " + id);
+            System.out.println(
+                    "Account ID : " + id
+            );
         }
     }
 
@@ -203,23 +232,6 @@ public class BankService {
         System.out.println(getAccount(id));
     }
 
-    public void showTransactions(String id)
-            throws AccountNotFoundException {
-
-        Account account = getAccount(id);
-
-        if (account.getTransactions().isEmpty()) {
-            System.out.println("No transactions.");
-            return;
-        }
-
-        System.out.println("Transaction History:");
-
-        for (Transaction transaction : account.getTransactions()) {
-            System.out.println(transaction);
-        }
-    }
-
     public void closeAccount(String id)
             throws AccountNotFoundException {
 
@@ -227,11 +239,14 @@ public class BankService {
 
         accounts.remove(id);
 
-        String name = account.getCustomerName().toLowerCase();
+        String name =
+                account.getCustomerName().toLowerCase();
 
-        List<String> ids = customerIndex.get(name);
+        List<String> ids =
+                customerIndex.get(name);
 
         if (ids != null) {
+
             ids.remove(id);
 
             if (ids.isEmpty()) {
@@ -239,14 +254,39 @@ public class BankService {
             }
         }
 
-        System.out.println("Account Closed Successfully.");
+        System.out.println(
+                "Account Closed Successfully."
+        );
+    }
+
+    public TreeMap<Integer, Account> getAccountsSortedById() {
+
+        TreeMap<Integer, Account> sorted =
+                new TreeMap<>();
+
+        accounts.forEach(
+                (id, account) ->
+                        sorted.put(
+                                Integer.parseInt(id),
+                                account
+                        )
+        );
+
+        return sorted;
+    }
+
+    public HashMap<String, Account> getAccounts() {
+        return accounts;
     }
 
     private Account getAccount(String id)
             throws AccountNotFoundException {
 
         if (!accounts.containsKey(id)) {
-            throw new AccountNotFoundException("Account not found.");
+
+            throw new AccountNotFoundException(
+                    "Account not found."
+            );
         }
 
         return accounts.get(id);
